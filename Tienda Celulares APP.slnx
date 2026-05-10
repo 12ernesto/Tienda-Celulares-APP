@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Tienda Celulares APP.ApiService/Tienda Celulares APP.ApiService.csproj" />
+  <Project Path="Tienda Celulares APP.AppHost/Tienda Celulares APP.AppHost.csproj" />
+  <Project Path="Tienda Celulares APP.ServiceDefaults/Tienda Celulares APP.ServiceDefaults.csproj" />
+  <Project Path="Tienda Celulares APP.Web/Tienda Celulares APP.Web.csproj" />
+</Solution>

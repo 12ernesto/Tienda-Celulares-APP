@@ -1,0 +1,16 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.1.0">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>dd7d31ac-1d76-44e1-9f79-03e539c74f76</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tienda Celulares APP.ApiService\Tienda Celulares APP.ApiService.csproj" />
+    <ProjectReference Include="..\Tienda Celulares APP.Web\Tienda Celulares APP.Web.csproj" />
+  </ItemGroup>
+
+</Project>

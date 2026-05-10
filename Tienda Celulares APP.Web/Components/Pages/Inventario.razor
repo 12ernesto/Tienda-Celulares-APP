@@ -1,0 +1,217 @@
+@page "/inventario"
+@using Tienda_Celulares_APP.Web.Services
+@inject InventoryService Inventory
+@inject IJSRuntime JS
+
+<PageTitle>Inventario</PageTitle>
+
+<h2>Registro de Inventario - Celulares</h2>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+<div class="row">
+    <div class="col-5">
+        <EditForm Model="editing" OnValidSubmit="Save" FormName="inventarioForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Marca</label>
+                <InputText class="form-control" @bind-Value="editing.Marca" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Modelo</label>
+                <InputText class="form-control" @bind-Value="editing.Modelo" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Color</label>
+                <InputText class="form-control" @bind-Value="editing.Color" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Stock</label>
+                <InputNumber class="form-control" TValue="int" @bind-Value="editing.Stock" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Precio</label>
+                <InputNumber class="form-control" TValue="decimal" @bind-Value="editing.Precio" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" disabled="@isBusy"> 
+                @if (isBusy)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                }
+                Guardar
+            </button>
+            <button type="button" class="btn btn-secondary ms-2" @onclick="Clear" disabled="@isBusy">Nuevo</button>
+        </EditForm>
+    </div>
+
+    <div class="col-7">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Color</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    <tr>
+                        <td>@item.Marca</td>
+                        <td>@item.Modelo</td>
+                        <td>@item.Color</td>
+                        <td>@item.Stock</td>
+                        <td>@item.Precio.ToString("C")</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" @onclick="async () => await Edit(item.Id)" disabled="@isBusy">Editar</button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="async () => await ConfirmDelete(item.Id)" disabled="@isBusy">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<MobilePhone> items = new();
+    private MobilePhone editing = new();
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isBusy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Inventory.SeedAsync();
+        items = await Inventory.GetAllAsync();
+    }
+
+    private async Task ConfirmDelete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "¿Desea eliminar este registro?");
+        if (ok)
+        {
+            await Delete(id);
+        }
+    }
+
+    private async Task Save()
+    {
+        errorMessage = null;
+        successMessage = null;
+        try
+        {
+            isBusy = true;
+            if (editing.Id == Guid.Empty)
+            {
+                await Inventory.CreateAsync(editing);
+                successMessage = "Registro creado correctamente.";
+            }
+            else
+            {
+                var ok = await Inventory.UpdateAsync(editing);
+                if (!ok) throw new Exception("No se encontró el registro para actualizar.");
+                successMessage = "Registro actualizado correctamente.";
+            }
+
+            await Refresh();
+            Clear();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task Edit(Guid id)
+    {
+        errorMessage = null;
+        successMessage = null;
+        try
+        {
+            isBusy = true;
+            var m = await Inventory.GetAsync(id);
+            if (m != null)
+            {
+                editing = new MobilePhone
+                {
+                    Id = m.Id,
+                    Marca = m.Marca,
+                    Modelo = m.Modelo,
+                    Color = m.Color,
+                    Stock = m.Stock,
+                    Precio = m.Precio
+                };
+            }
+            else
+            {
+                errorMessage = "Registro no encontrado.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task Delete(Guid id)
+    {
+        errorMessage = null;
+        successMessage = null;
+        try
+        {
+            isBusy = true;
+            var ok = await Inventory.DeleteAsync(id);
+            if (!ok) throw new Exception("No se pudo eliminar el registro (no encontrado).");
+            successMessage = "Registro eliminado correctamente.";
+            await Refresh();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task Refresh()
+    {
+        items = await Inventory.GetAllAsync();
+        StateHasChanged();
+    }
+
+    private void Clear()
+    {
+        editing = new MobilePhone();
+    }
+}
